@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rétroplanning Entreprise — Pilotage &amp; Suivi des Actions</title>
+  <link rel="stylesheet" href="retroplanning.css" />
+</head>
+<body>
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="brand-logo" aria-label="Accueil Rétroplanning">
+        <span class="brand-mark" aria-hidden="true">RP</span>
+        <span class="brand-text">
+          <strong>Rétroplanning</strong>
+          <small>Pilotage &amp; Coordination</small>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Navigation principale">
+        <a href="index.html" class="nav-link">Accueil</a>
+        <a href="retroplanning.html" class="nav-link active" aria-current="page">Rétroplanning</a>
+        <a href="#dashboard-section" class="nav-link">Tableau de bord</a>
+        <a href="#project-editor-section" class="nav-link">Projets &amp; Dates</a>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" id="openNewProjectBtn" class="btn btn-primary">+ Nouveau projet</button>
+        <button type="button" id="themeToggleBtn" class="btn btn-ghost" aria-label="Basculer entre le thème clair et sombre">
+          <span id="themeIcon" aria-hidden="true">🌙</span>
+          <span id="themeLabel">Mode sombre</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-container" id="main-content">
+    <section class="page-hero" aria-labelledby="pageTitle">
+      <div class="hero-copy">
+        <span class="eyebrow">Suivi Opérationnel &amp; Rétro-ingénierie Temporelle</span>
+        <h1 id="pageTitle">Rétroplanning &amp; Tableau de Bord</h1>
+        <p class="hero-subtitle">Visualisez les plages d'actions sur le calendrier (1 à 31), remontez les jalons vers chaque date cible, ajoutez de nouveaux projets, ajustez les dates et suivez l'avancement en temps réel.</p>
+      </div>
+
+      <div class="period-toolbar" role="group" aria-label="Sélection de la période">
+        <label class="toolbar-field">
+          <span>Mois</span>
+          <select id="monthSelect" aria-label="Choisir le mois"></select>
+        </label>
+        <label class="toolbar-field">
+          <span>Année</span>
+          <input type="number" id="yearInput" min="2020" max="2035" value="2026" aria-label="Choisir l'année" />
+        </label>
+        <button type="button" id="resetDemoBtn" class="btn btn-secondary">Réinitialiser démo</button>
+      </div>
+    </section>
+
+    <section id="dashboard-section" class="dashboard-grid" aria-label="Tableau de bord de pilotage">
+      <article class="kpi-card">
+        <div class="kpi-label">Projets actifs</div>
+        <div class="kpi-value" id="kpiProjectsCount">0</div>
+        <div class="kpi-meta" id="kpiProjectsMeta">Plages planifiées sur la période</div>
+      </article>
+      <article class="kpi-card">
+        <div class="kpi-label">Avancement global</div>
+        <div class="kpi-value" id="kpiGlobalProgress">0%</div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="kpiGlobalBar" style="width:0%;"></div></div>
+        <div class="kpi-meta" id="kpiTasksSummary">0 / 0 tâches terminées</div>
+      </article>
+      <article class="kpi-card">
+        <div class="kpi-label">Tâches en cours</div>
+        <div class="kpi-value" id="kpiInProgressCount">0</div>
+        <div class="kpi-meta">Actions actuellement mobilisées</div>
+      </article>
+      <article class="kpi-card">
+        <div class="kpi-label">Prochaine échéance</div>
+        <div class="kpi-value kpi-value-sm" id="kpiNextDeadline">—</div>
+        <div class="kpi-meta" id="kpiNextDeadlineProject">Aucune échéance à venir</div>
+      </article>
+    </section>
+
+    <section class="workspace-grid" aria-label="Calendrier et suivi de rétroplanning">
+      <article class="panel calendar-panel">
+        <div class="panel-header">
+          <div>
+            <h2 id="calendarTitle">Calendrier — Décembre 2026</h2>
+            <p class="panel-desc">Cliquez sur un repère de projet dans le calendrier pour sélectionner l'action et ses jalons.</p>
+          </div>
+          <div class="calendar-legend" id="calendarLegend" aria-label="Légende des projets"></div>
+        </div>
+        <div class="calendar-table-wrapper">
+          <table class="calendar-table" id="calendarTable" aria-describedby="calendarTitle">
+            <thead>
+              <tr>
+                <th scope="col">Lun</th><th scope="col">Mar</th><th scope="col">Mer</th>
+                <th scope="col">Jeu</th><th scope="col">Ven</th><th scope="col">Sam</th><th scope="col">Dim</th>
+              </tr>
+            </thead>
+            <tbody id="calendarBody"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <aside class="panel side-panel" aria-label="Panneau de sélection et suivi des tâches">
+        <div class="panel-header">
+          <div>
+            <h2>Projets &amp; Rétroplanning</h2>
+            <p class="panel-desc">Sélectionnez un projet pour consulter et mettre à jour ses étapes.</p>
+          </div>
+        </div>
+        <div class="project-selector-list" id="projectSelectorList" role="group" aria-label="Sélection des projets"></div>
+        <div id="selectedProjectContainer" class="selected-project-box"></div>
+      </aside>
+    </section>
+
+    <section id="project-editor-section" class="panel editor-workbench" aria-label="Ajout de projet et modification des dates">
+      <div class="panel-header">
+        <div>
+          <h2>Gestion des Projets &amp; Modification des Dates</h2>
+          <p class="panel-desc">Modifiez la plage de dates ou l'échéance du projet sélectionné, ou créez un nouveau projet avec ses tâches de rétroplanning.</p>
+        </div>
+      </div>
+      <div class="workbench-columns">
+        <form id="editProjectForm" class="card-form" aria-label="Modifier le projet sélectionné">
+          <h3>Modifier le projet sélectionné</h3>
+          <div id="noProjectSelectedNotice" class="muted-note">Sélectionnez un projet pour modifier ses dates.</div>
+          <div class="form-row">
+            <label class="field"><span>Titre du projet</span><input type="text" id="editTitleInput" required /></label>
+            <label class="field"><span>Responsable principal</span><input type="text" id="editOwnerInput" required /></label>
+          </div>
+          <div class="form-row form-row-3">
+            <label class="field"><span>Jour début (1–31)</span><input type="number" id="editStartDayInput" min="1" max="31" required /></label>
+            <label class="field"><span>Jour fin (1–31)</span><input type="number" id="editEndDayInput" min="1" max="31" required /></label>
+            <label class="field"><span>Date d'échéance</span><input type="date" id="editDeadlineInput" required /></label>
+          </div>
+          <div class="form-row">
+            <label class="field">
+              <span>Couleur du repère</span>
+              <select id="editColorInput">
+                <option value="#1d4ed8">Bleu institutionnel</option>
+                <option value="#0f766e">Vert émeraude</option>
+                <option value="#b45309">Ambre entreprise</option>
+                <option value="#7e22ce">Violet stratégique</option>
+                <option value="#be123c">Rouge corail</option>
+              </select>
+            </label>
+            <label class="field"><span>Objectif / Périmètre</span><input type="text" id="editSummaryInput" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            <button type="button" id="deleteProjectBtn" class="btn btn-danger-outline">Supprimer le projet</button>
+          </div>
+        </form>
+
+        <form id="newProjectForm" class="card-form" aria-label="Ajouter un nouveau projet">
+          <h3>Ajouter un nouveau projet</h3>
+          <div class="form-row">
+            <label class="field"><span>Nom du projet</span><input type="text" id="newTitleInput" placeholder="Ex. Forum Alternance" required /></label>
+            <label class="field"><span>Responsable principal</span><input type="text" id="newOwnerInput" placeholder="Ex. Camille Laurent" required /></label>
+          </div>
+          <div class="form-row form-row-3">
+            <label class="field"><span>Jour début (1–31)</span><input type="number" id="newStartDayInput" min="1" max="31" value="24" required /></label>
+            <label class="field"><span>Jour fin (1–31)</span><input type="number" id="newEndDayInput" min="1" max="31" value="28" required /></label>
+            <label class="field"><span>Date d'échéance</span><input type="date" id="newDeadlineInput" value="2026-12-28" required /></label>
+          </div>
+          <div class="form-row">
+            <label class="field">
+              <span>Couleur du repère</span>
+              <select id="newColorInput">
+                <option value="#7e22ce">Violet stratégique</option>
+                <option value="#1d4ed8">Bleu institutionnel</option>
+                <option value="#0f766e">Vert émeraude</option>
+                <option value="#b45309">Ambre entreprise</option>
+                <option value="#be123c">Rouge corail</option>
+              </select>
+            </label>
+            <label class="field"><span>Jalons initiaux (séparés par virgule)</span><input type="text" id="newMilestonesInput" placeholder="Ex. Cadrage besoins, Convocations, Briefing jury" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Créer le projet</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Rétroplanning Entreprise — Module de pilotage et de suivi des étapes clés</span>
+      <span id="storageStatusText">Sauvegarde locale automatique activée</span>
+    </div>
+  </footer>
+
+  <script src="retroplanning.js"></script>
+</body>
+</html>
