@@ -945,6 +945,129 @@ table.cal td.is-today .dnum {
 .minical-hint { font-size: 0.72rem; color: var(--muted); }
 @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
 
+/* --- BARRE EXPORT / IMPORT XLSX & PDF --- */
+.io-toolbar {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+.io-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+.caret-ico {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-left: 0.1rem;
+}
+.io-menu-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 225px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.16);
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.io-menu-popover[hidden] {
+  display: none;
+}
+.io-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.48rem 0.65rem;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.io-menu-item:hover {
+  background: var(--surface-subtle);
+}
+.io-menu-item.is-muted {
+  color: var(--text-secondary);
+  font-size: 0.79rem;
+}
+.io-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 0.4rem;
+}
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-ico {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.btn-link-subtle {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.78rem;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.35rem 0.45rem;
+  border-radius: 6px;
+}
+.btn-link-subtle:hover {
+  background: var(--primary-soft, rgba(234, 88, 12, 0.1));
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  #authView,
+  .topbar,
+  .header-actions,
+  .io-toolbar,
+  .view-switcher,
+  #calNavControls,
+  .detail-actions,
+  .modal-backdrop,
+  #miniCalPopover,
+  #globalBanner,
+  #seedExamplesBtn,
+  #projectTabs {
+    display: none !important;
+  }
+  .wrap {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .layout {
+    display: block !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+  .step {
+    break-inside: avoid;
+  }
+}
+
 /* --- NAVIGATION VRAI CALENDRIER --- */
 .cal-nav-group {
   display: flex;
@@ -1609,6 +1732,27 @@ table.cal td .dnum {
   color: #1d4ed8;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
+}
+.step-date-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.step-urgency {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.step-urgency.is-late {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.step-urgency.is-soon {
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .share-modal-card { max-width: 540px; }

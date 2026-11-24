@@ -422,21 +422,42 @@ function rendrePanneau() {
       ${actionBtns}
     </div>
     <div class="meta">Du ${formatDateCourt(actif.startDate)} au ${formatDateCourt(actif.endDate)} • <strong>${countJoursOuvres(actif.startDate, actif.endDate)} j. ouvrés</strong> • ${faitesActif}/${actif.etapes.length} fait (${pctActif}%)</div>
-    ${etapesTriees.map((e) => {
-      const isDone = e.statut === "Fait";
-      const dateTexte = e.dateISO ? formatDateLong(e.dateISO) : e.dateLimite;
-      return `
+    ${(() => {
+      const todayParts = parseISO(getTodayISO());
+      const todayMs = todayParts ? Date.UTC(todayParts.year, todayParts.month, todayParts.day) : null;
+      return etapesTriees.map((e) => {
+        const isDone = e.statut === "Fait";
+        const dateTexte = e.dateISO ? formatDateLong(e.dateISO) : e.dateLimite;
+        let urgencyTag = "";
+        if (!isDone && e.dateISO && todayMs !== null) {
+          const dParts = parseISO(e.dateISO);
+          if (dParts) {
+            const diffDays = Math.round((Date.UTC(dParts.year, dParts.month, dParts.day) - todayMs) / 86400000);
+            if (diffDays < 0) {
+              urgencyTag = `<span class="step-urgency is-late" title="Échéance dépassée">En retard</span>`;
+            } else if (diffDays === 0) {
+              urgencyTag = `<span class="step-urgency is-soon" title="Échéance aujourd'hui">Aujourd'hui</span>`;
+            } else if (diffDays <= 2) {
+              urgencyTag = `<span class="step-urgency is-soon" title="Échéance dans ${diffDays} jour(s)">Bientôt</span>`;
+            }
+          }
+        }
+        return `
       <div class="step">
         <div class="step-left">
           <input type="checkbox" class="step-check" data-eid="${e.id}" ${isDone ? "checked" : ""} aria-label="Marquer l'étape comme faite" />
           <div>
-            <div class="step-date" style="color:${accent}">Date limite : ${dateTexte}</div>
+            <div class="step-date-row"><span class="step-date" style="color:${accent}">Date limite : ${dateTexte}</span>${urgencyTag}</div>
             <p class="step-text ${isDone ? "is-done" : ""}">${e.libelle}</p>
             <div class="step-who">Responsable : ${e.responsable}</div>
           </div>
         </div>
         <button type="button" class="st ${classeStatut(e.statut)}" data-eid="${e.id}" title="Cliquer pour changer : À faire → En cours → Fait">${e.statut}</button>
       </div>
+    `;
+      }).join("");
+    })()}
+  `;
     `;
     }).join("")}
   `;
@@ -802,6 +823,549 @@ function initModale() {
 }
 
 /* --- NAVIGATION VRAI CALENDRIER --- */
+/* --- EXPORT / IMPORT EXCEL (.XLSX) & EXPORT PDF --- */
+const XLSX_COLUMNS = ["Projet", "Étape", "Date limite", "Responsable", "Statut"];
+
+function normaliserDateImport(val) {
+  if (!val) return getTodayISO();
+  if (val instanceof Date && !Number.isNaN(val.getTime())) {
+    return toISO(val.getFullYear(), val.getMonth(), val.getDate());
+  }
+  if (typeof val === "number" && window.XLSX?.SSF?.parse_date_code) {
+    const d = window.XLSX.SSF.parse_date_code(val);
+    if (d && d.y && d.m && d.d) {
+      return toISO(d.y, d.m - 1, d.d);
+    }
+  }
+  const str = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const frMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (frMatch) {
+    const day = Number(frMatch[1]);
+    const month = Number(frMatch[2]) - 1;
+    const year = Number(frMatch[3]);
+    return toISO(year, month, day);
+  }
+  const parsed = new Date(str);
+  if (!Number.isNaN(parsed.getTime())) {
+    return toISO(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  }
+  return getTodayISO();
+}
+
+function normaliserStatutImport(val) {
+  const raw = String(val || "").trim().toLowerCase();
+  if (raw === "fait" || raw === "terminé" || raw === "termine" || raw === "done") return "Fait";
+  if (raw === "en cours" || raw === "doing" || raw === "in progress") return "En cours";
+  return "À faire";
+}
+
+function construireLignesExport(listeProjets) {
+  const rows = [];
+  listeProjets.forEach((p) => {
+    if (!p.etapes || !p.etapes.length) {
+      rows.push({
+        "Projet": p.titre,
+        "Étape": "",
+        "Date limite": p.endDate || "",
+        "Responsable": p.owner || "",
+        "Statut": "À faire"
+      });
+      return;
+    }
+    const triees = [...p.etapes].sort((a, b) => (a.dateISO || "").localeCompare(b.dateISO || ""));
+    triees.forEach((e) => {
+      rows.push({
+        "Projet": p.titre,
+        "Étape": e.libelle || "",
+        "Date limite": e.dateISO || e.dateLimite || "",
+        "Responsable": e.responsable || p.owner || "",
+        "Statut": STATUS_FLOW.includes(e.statut) ? e.statut : "À faire"
+      });
+    });
+  });
+  return rows;
+}
+
+function formatDateFrSlash(iso) {
+  const p = parseISO(iso);
+  if (!p) return iso || "";
+  return `${String(p.day).padStart(2, "0")}/${String(p.month + 1).padStart(2, "0")}/${p.year}`;
+}
+
+function styleStatutCellule(cell, statut) {
+  const styles = {
+    "Fait": { fill: "DCFCE7", text: "166534" },
+    "En cours": { fill: "FEF3C7", text: "92400E" },
+    "À faire": { fill: "F1F5F9", text: "334155" }
+  };
+  const cfg = styles[statut] || styles["À faire"];
+  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: `FF${cfg.fill}` } };
+  cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: `FF${cfg.text}` } };
+  cell.alignment = { horizontal: "center", vertical: "middle" };
+}
+
+async function sauvegarderClasseurExcelJS(workbook, nomFichier) {
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomFichier;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function exporterVersXlsx(listeProjets, nomFichier) {
+  if (!window.ExcelJS) {
+    afficherNotification("Bibliothèque ExcelJS indisponible. Vérifiez la connexion réseau.", 5000);
+    return;
+  }
+  if (!listeProjets.length) {
+    afficherNotification("Aucun projet à exporter.", 3500);
+    return;
+  }
+
+  const lignes = construireLignesExport(listeProjets).map((r) => ({
+    ...r,
+    "Date limite": formatDateFrSlash(r["Date limite"])
+  }));
+
+  const wb = new window.ExcelJS.Workbook();
+  wb.creator = "Rétroplanning E2C";
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet("Retroplanning", {
+    views: [{ state: "frozen", ySplit: 4, showGridLines: true }],
+    pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+  });
+
+  ws.mergeCells("A1:E1");
+  const titleCell = ws.getCell("A1");
+  titleCell.value = "Rétroplanning E2C — Suivi des actions & étapes";
+  titleCell.font = { name: "Calibri", size: 15, bold: true, color: { argb: "FFFFFFFF" } };
+  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEA580C" } };
+  titleCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+  ws.getRow(1).height = 28;
+
+  ws.mergeCells("A2:E2");
+  const subCell = ws.getCell("A2");
+  const totalEtapes = lignes.length;
+  const faitesCount = lignes.filter((x) => x.Statut === "Fait").length;
+  const pctGlobal = totalEtapes ? Math.round((faitesCount / totalEtapes) * 100) : 0;
+  subCell.value = `Exporté le ${formatDateFrSlash(getTodayISO())}  •  ${listeProjets.length} projet(s)  •  ${faitesCount}/${totalEtapes} étapes faites (${pctGlobal}%)`;
+  subCell.font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF475569" } };
+  subCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF7ED" } };
+  subCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+  ws.getRow(2).height = 20;
+  ws.getRow(3).height = 8;
+
+  const headerRow = ws.getRow(4);
+  headerRow.height = 24;
+  XLSX_COLUMNS.forEach((colName, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = colName;
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E293B" } };
+    cell.alignment = {
+      horizontal: idx === 2 || idx === 4 ? "center" : "left",
+      vertical: "middle",
+      indent: idx === 2 || idx === 4 ? 0 : 1
+    };
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF0F172A" } },
+      bottom: { style: "medium", color: { argb: "FFEA580C" } },
+      left: { style: "thin", color: { argb: "FF334155" } },
+      right: { style: "thin", color: { argb: "FF334155" } }
+    };
+  });
+
+  const thinBorder = {
+    top: { style: "thin", color: { argb: "FFE2E8F0" } },
+    bottom: { style: "thin", color: { argb: "FFE2E8F0" } },
+    left: { style: "thin", color: { argb: "FFE2E8F0" } },
+    right: { style: "thin", color: { argb: "FFE2E8F0" } }
+  };
+
+  lignes.forEach((rowData, rIdx) => {
+    const row = ws.getRow(5 + rIdx);
+    row.height = 21;
+    const zebra = rIdx % 2 === 1;
+    XLSX_COLUMNS.forEach((colName, cIdx) => {
+      const cell = row.getCell(cIdx + 1);
+      cell.value = rowData[colName] ?? "";
+      cell.border = thinBorder;
+      if (colName === "Statut") {
+        styleStatutCellule(cell, cell.value);
+      } else if (colName === "Date limite") {
+        cell.font = { name: "Calibri", size: 11, color: { argb: "FF0F172A" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+      } else {
+        cell.font = {
+          name: "Calibri",
+          size: 11,
+          bold: colName === "Projet",
+          color: { argb: "FF0F172A" }
+        };
+        cell.alignment = { horizontal: "left", vertical: "middle", wrapText: colName === "Étape", indent: 1 };
+        if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+      }
+    });
+  });
+
+  ws.autoFilter = {
+    from: { row: 4, column: 1 },
+    to: { row: Math.max(4, 4 + lignes.length), column: 5 }
+  };
+
+  ws.columns = [
+    { width: 28 },
+    { width: 48 },
+    { width: 15 },
+    { width: 28 },
+    { width: 15 }
+  ];
+
+  await sauvegarderClasseurExcelJS(wb, nomFichier);
+  afficherNotification(`Export Excel stylé généré : ${nomFichier}`);
+}
+
+async function telechargerModeleXlsx() {
+  if (!window.ExcelJS) {
+    afficherNotification("Bibliothèque ExcelJS indisponible. Vérifiez la connexion réseau.", 5000);
+    return;
+  }
+  const wb = new window.ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Modele", {
+    views: [{ state: "frozen", ySplit: 1, showGridLines: true }]
+  });
+
+  const headerRow = ws.getRow(1);
+  headerRow.height = 24;
+  XLSX_COLUMNS.forEach((colName, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = colName;
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E293B" } };
+    cell.alignment = { horizontal: idx === 2 || idx === 4 ? "center" : "left", vertical: "middle", indent: idx === 2 || idx === 4 ? 0 : 1 };
+  });
+
+  const exemples = [
+    ["Forum alternance E2C", "Valider la liste des entreprises participantes", formatDateFrSlash(getTodayISO()), "Chargé relations entreprises", "En cours"],
+    ["Forum alternance E2C", "Envoyer les convocations aux stagiaires", formatDateFrSlash(addJoursOuvres(getTodayISO(), 2)), "Chargé d'accompagnement", "À faire"]
+  ];
+
+  exemples.forEach((vals, i) => {
+    const row = ws.getRow(2 + i);
+    row.height = 20;
+    vals.forEach((v, cIdx) => {
+      const cell = row.getCell(cIdx + 1);
+      cell.value = v;
+      cell.font = { name: "Calibri", size: 11, color: { argb: "FF0F172A" } };
+      cell.alignment = { horizontal: cIdx === 2 || cIdx === 4 ? "center" : "left", vertical: "middle", indent: cIdx === 2 || cIdx === 4 ? 0 : 1 };
+      if (cIdx === 4) styleStatutCellule(cell, v);
+    });
+  });
+
+  ws.columns = [
+    { width: 28 },
+    { width: 46 },
+    { width: 15 },
+    { width: 28 },
+    { width: 15 }
+  ];
+
+  await sauvegarderClasseurExcelJS(wb, "Modele_Retroplanning_E2C.xlsx");
+  afficherNotification("Modèle Excel téléchargé : Modele_Retroplanning_E2C.xlsx");
+}
+
+async function importerDepuisXlsx(file) {
+  if (!file) return;
+  if (!currentUser) {
+    afficherNotification("Connectez-vous pour importer un fichier Excel dans Supabase.", 4000);
+    return;
+  }
+  if (!window.XLSX) {
+    afficherNotification("Bibliothèque Excel (SheetJS) indisponible.", 5000);
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const wb = window.XLSX.read(buffer, { type: "array" });
+    const firstSheetName = wb.SheetNames[0];
+    if (!firstSheetName) {
+      afficherNotification("Le fichier Excel ne contient aucune feuille.", 4500);
+      return;
+    }
+    const ws = wb.Sheets[firstSheetName];
+    const rawRows = window.XLSX.utils.sheet_to_json(ws, { defval: "" });
+    if (!rawRows.length) {
+      afficherNotification("Le fichier Excel est vide.", 4500);
+      return;
+    }
+
+    const firstKeys = Object.keys(rawRows[0] || {});
+    const hasProjetCol = firstKeys.some((k) => k.trim().toLowerCase() === "projet");
+    const hasEtapeCol = firstKeys.some((k) => ["étape", "etape"].includes(k.trim().toLowerCase()));
+    if (!hasProjetCol && !hasEtapeCol) {
+      afficherNotification("Format invalide : utilisez les colonnes Projet, Étape, Date limite, Responsable, Statut.", 6000);
+      return;
+    }
+
+    const getCol = (row, candidates) => {
+      const key = Object.keys(row).find((k) => candidates.includes(k.trim().toLowerCase()));
+      return key ? row[key] : "";
+    };
+
+    const groupes = new Map();
+    rawRows.forEach((r, idx) => {
+      const nomProjet = String(getCol(r, ["projet", "project"]) || "").trim() || "Projet importé Excel";
+      const libelleEtape = String(getCol(r, ["étape", "etape", "step"]) || "").trim();
+      const dateRaw = getCol(r, ["date limite", "date_limite", "date", "échéance", "echeance"]);
+      const responsable = String(getCol(r, ["responsable", "owner"]) || "").trim();
+      const statut = normaliserStatutImport(getCol(r, ["statut", "status"]));
+      const dateISO = normaliserDateImport(dateRaw);
+
+      if (!groupes.has(nomProjet)) {
+        groupes.set(nomProjet, []);
+      }
+      if (libelleEtape || dateRaw) {
+        groupes.get(nomProjet).push({
+          id: `imp-${Date.now()}-${idx}`,
+          dateISO,
+          dateLimite: formatDateLong(dateISO),
+          libelle: libelleEtape || "Étape importée",
+          responsable: responsable || "Formateur référent",
+          statut
+        });
+      }
+    });
+
+    const payloads = [];
+    groupes.forEach((etapes, nomProjet) => {
+      const dates = etapes.map((e) => e.dateISO).filter(Boolean).sort();
+      const startDate = dates[0] || getTodayISO();
+      const endDate = dates[dates.length - 1] || startDate;
+      const ownerPrincipal = etapes[0]?.responsable || "Formateur référent";
+      payloads.push({
+        user_id: currentUser.id,
+        name: nomProjet,
+        start_day: parseISO(startDate)?.day || 1,
+        end_day: parseISO(endDate)?.day || 1,
+        due_date: `${startDate}|${endDate}`,
+        owner: ownerPrincipal,
+        color: "#2563eb",
+        steps: etapes
+      });
+    });
+
+    if (!payloads.length) {
+      afficherNotification("Aucune ligne exploitable trouvée dans le fichier.", 4500);
+      return;
+    }
+
+    const { data, error } = await sb.from("projects").insert(payloads).select();
+    if (error) {
+      afficherNotification(`Erreur d'import Supabase : ${error.message}`, 5500);
+      return;
+    }
+
+    const ajoutes = (data || []).map(mapRowToProject);
+    projets = [...projets, ...ajoutes];
+    if (ajoutes[0]) {
+      projetActifId = ajoutes[0].id;
+      const pStart = parseISO(ajoutes[0].startDate);
+      if (pStart) { viewYear = pStart.year; viewMonth = pStart.month; }
+    }
+    rendreTout();
+    afficherNotification(`${ajoutes.length} projet(s) importé(s) depuis Excel vers Supabase !`);
+  } catch (err) {
+    afficherNotification(`Lecture Excel impossible : ${err.message || err}`, 5500);
+  }
+}
+
+function chargerImageLogoDataUrl(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || 120;
+        canvas.height = img.naturalHeight || 120;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL("image/png"), width: canvas.width, height: canvas.height });
+      } catch (_) {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+async function telechargerRetroplanningPdf() {
+  const jsPDFCtor = window.jspdf?.jsPDF;
+  if (!jsPDFCtor) {
+    afficherNotification("Bibliothèque PDF (jsPDF) indisponible. Vérifiez la connexion réseau.", 5000);
+    return;
+  }
+  const doc = new jsPDFCtor({ orientation: "portrait", unit: "mm", format: "a4" });
+  const actif = getProjetActif();
+  const logo = await chargerImageLogoDataUrl("E2Clogo.png");
+
+  const xText = logo?.dataUrl ? 40 : 14;
+  let logoBottom = 12;
+  if (logo?.dataUrl) {
+    const ratio = logo.height / (logo.width || 1);
+    const drawW = 22;
+    const drawH = Math.min(22, Math.max(10, drawW * ratio));
+    doc.addImage(logo.dataUrl, "PNG", 14, 12, drawW, drawH);
+    logoBottom = 12 + drawH;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Rétroplanning E2C — Suivi des actions", xText, 20);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Généré le ${formatDateLong(getTodayISO())} • Vue : ${activeViewMode === "gantt" ? "Gantt" : "Calendrier"}`, xText, 27);
+
+  let yCursor = Math.max(logoBottom + 6, 36);
+
+  if (actif) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`Projet : ${actif.titre}`, 14, yCursor);
+
+    yCursor += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Responsable : ${actif.owner}  |  Période : ${formatDateCourt(actif.startDate)} au ${formatDateCourt(actif.endDate)}`, 14, yCursor);
+
+    const etapesTriees = [...actif.etapes].sort((a, b) => (a.dateISO || "").localeCompare(b.dateISO || ""));
+    const tableBody = etapesTriees.length
+      ? etapesTriees.map((e) => [
+          e.libelle || "",
+          e.dateISO ? formatDateCourt(e.dateISO) : (e.dateLimite || ""),
+          e.responsable || actif.owner || "",
+          e.statut || "À faire"
+        ])
+      : [["Aucune étape enregistrée", "—", actif.owner || "—", "—"]];
+
+    if (typeof doc.autoTable === "function") {
+      doc.autoTable({
+        startY: yCursor + 6,
+        head: [["Étape", "Date limite", "Responsable", "Statut"]],
+        body: tableBody,
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [234, 88, 12], textColor: 255 }
+      });
+    }
+  } else {
+    doc.setFontSize(11);
+    doc.text("Aucun projet actif sélectionné.", 14, yCursor);
+  }
+
+  doc.save("Retroplanning_E2C.pdf");
+  afficherNotification("PDF téléchargé : Retroplanning_E2C.pdf");
+}
+
+function initExportImportControls() {
+  const excelBtn = document.getElementById("excelMenuBtn");
+  const excelMenu = document.getElementById("excelMenuPopover");
+  const pdfBtn = document.getElementById("pdfMenuBtn");
+  const pdfMenu = document.getElementById("pdfMenuPopover");
+
+  const fermerMenusIo = (exceptMenu = null) => {
+    [excelMenu, pdfMenu].forEach((menu) => {
+      if (!menu || menu === exceptMenu) return;
+      menu.hidden = true;
+      const trigger = menu === excelMenu ? excelBtn : pdfBtn;
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+    });
+  };
+
+  excelBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = Boolean(excelMenu?.hidden);
+    fermerMenusIo(excelMenu);
+    if (excelMenu) {
+      excelMenu.hidden = !willOpen;
+      excelBtn.setAttribute("aria-expanded", String(willOpen));
+    }
+  });
+
+  pdfBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = Boolean(pdfMenu?.hidden);
+    fermerMenusIo(pdfMenu);
+    if (pdfMenu) {
+      pdfMenu.hidden = !willOpen;
+      pdfBtn.setAttribute("aria-expanded", String(willOpen));
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".io-dropdown")) fermerMenusIo();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") fermerMenusIo();
+  });
+
+  document.getElementById("exportActiveXlsxBtn")?.addEventListener("click", async () => {
+    fermerMenusIo();
+    const actif = getProjetActif();
+    const slug = (actif?.titre || "projet_actif")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "projet_actif";
+    await exporterVersXlsx(actif ? [actif] : [], `Retroplanning_${slug}.xlsx`);
+  });
+
+  document.getElementById("exportAllXlsxBtn")?.addEventListener("click", async () => {
+    fermerMenusIo();
+    await exporterVersXlsx(projets, "Retroplanning_E2C_tous_projets.xlsx");
+  });
+
+  document.getElementById("downloadTemplateXlsxBtn")?.addEventListener("click", async () => {
+    fermerMenusIo();
+    await telechargerModeleXlsx();
+  });
+
+  const fileInput = document.getElementById("importXlsxInput");
+  document.getElementById("importXlsxBtn")?.addEventListener("click", () => {
+    fermerMenusIo();
+    fileInput?.click();
+  });
+  fileInput?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) await importerDepuisXlsx(file);
+  });
+
+  document.getElementById("printViewBtn")?.addEventListener("click", () => {
+    fermerMenusIo();
+    window.print();
+  });
+  document.getElementById("downloadPdfBtn")?.addEventListener("click", async () => {
+    fermerMenusIo();
+    await telechargerRetroplanningPdf();
+  });
+}
+
 function initNavigationCalendrier() {
   document.getElementById("prevMonthBtn").addEventListener("click", () => {
     viewMonth--;
@@ -1365,7 +1929,8 @@ function rendreTout() {
 document.addEventListener("DOMContentLoaded", async () => {
   initAuthUI();
   initViewSwitcher();
-  initNavigationCalendrier();
+  initExportImportControls();
+initNavigationCalendrier();
   initModalePartage();
   initMiniCalendrier();
   initModale();

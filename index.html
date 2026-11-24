@@ -9,6 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <div id="authView" class="auth-shell">
@@ -64,8 +68,34 @@
           <h1>Suivi des actions E2C</h1>
           <p>Partez de la date cible et remontez les étapes : cochez une tâche pour la valider ou cliquez sur son statut.</p>
         </div>
-        <div class="header-actions">
+        <div class="header-actions io-toolbar">
           <button type="button" id="seedExamplesBtn" class="btn-secondary" hidden>+ Charger 3 projets exemples</button>
+          <div class="io-dropdown">
+            <button type="button" id="excelMenuBtn" class="btn-secondary btn-with-icon" aria-expanded="false" aria-controls="excelMenuPopover">
+              <img src="excel.png" alt="" class="btn-ico" />
+              <span>Excel</span>
+              <span class="caret-ico" aria-hidden="true">▾</span>
+            </button>
+            <div id="excelMenuPopover" class="io-menu-popover" role="menu" hidden>
+              <button type="button" id="exportActiveXlsxBtn" class="io-menu-item" role="menuitem">Exporter le projet actif</button>
+              <button type="button" id="exportAllXlsxBtn" class="io-menu-item" role="menuitem">Exporter tous les projets</button>
+              <button type="button" id="importXlsxBtn" class="io-menu-item" role="menuitem">Importer un fichier (.xlsx)</button>
+              <div class="io-menu-divider" role="separator"></div>
+              <button type="button" id="downloadTemplateXlsxBtn" class="io-menu-item is-muted" role="menuitem">Télécharger le modèle Excel</button>
+            </div>
+            <input type="file" id="importXlsxInput" accept=".xlsx,.xls" hidden />
+          </div>
+          <div class="io-dropdown">
+            <button type="button" id="pdfMenuBtn" class="btn-secondary btn-with-icon" aria-expanded="false" aria-controls="pdfMenuPopover">
+              <img src="pdf.png" alt="" class="btn-ico" />
+              <span>PDF</span>
+              <span class="caret-ico" aria-hidden="true">▾</span>
+            </button>
+            <div id="pdfMenuPopover" class="io-menu-popover" role="menu" hidden>
+              <button type="button" id="downloadPdfBtn" class="io-menu-item" role="menuitem">Télécharger Retroplanning_E2C.pdf</button>
+              <button type="button" id="printViewBtn" class="io-menu-item" role="menuitem">Imprimer la vue</button>
+            </div>
+          </div>
           <button type="button" class="btn-primary" data-open-modal>+ Nouveau projet</button>
         </div>
       </section>
