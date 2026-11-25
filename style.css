@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f8fafc;
   --surface: #ffffff;
   --surface-subtle: #f1f5f9;
@@ -25,6 +25,7 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -234,9 +235,9 @@ body {
 
 .page-header h1 {
   margin: 0;
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.375rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 
@@ -1011,13 +1012,14 @@ table.cal td.is-today .dnum {
 .stag-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
   background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  padding: 0.12rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.125rem 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
+  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1), background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .stag-chip-rm {
   border: none;
@@ -2019,3 +2021,36 @@ table.cal td.is-weekend {
   gap: 0.75rem;
   margin-left: auto;
 }
+
+/* Recadrage et tailles de stagiaires.png */
+.stag-avatar {
+display: inline-block;
+flex-shrink: 0;
+object-fit: cover;
+object-position: center 20%;
+border-radius: 999px;
+border: 1px solid var(--border-strong, rgba(0, 0, 0, 0.14));
+background: var(--surface-subtle, #f4f4f5);
+vertical-align: middle;
+}
+.stag-avatar-xs { width: 15px; height: 15px; }
+.stag-avatar-sm { width: 20px; height: 20px; }
+.stag-avatar-md { width: 32px; height: 32px; }
+.stag-avatar-lg { width: 38px; height: 38px; }
+.stag-section-label { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+.stag-avatar {
+  display: inline-block;
+  flex-shrink: 0;
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong, rgba(15, 23, 42, 0.18));
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  background: var(--surface-subtle, #f4f4f5);
+  vertical-align: middle;
+}
+.stag-avatar-xs { width: 15px; height: 15px; }
+.stag-avatar-sm { width: 22px; height: 22px; }
+.stag-avatar-md { width: 34px; height: 34px; }
+.stag-avatar-lg { width: 40px; height: 40px; }

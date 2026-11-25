@@ -1,4 +1,4 @@
-const SUPABASE_URL = "https://alosapdelryrbcudrsoj.supabase.co";
+﻿const SUPABASE_URL = "https://alosapdelryrbcudrsoj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aJhHdHk4RgezLXqQjvhFlQ_e0eSBa3_";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -410,7 +410,7 @@ function rendrePanneau() {
   const stagiairesProjet = Array.isArray(actif.stagiaires) ? actif.stagiaires : [];
   const actionBtns = `
     <div class="detail-actions">
-      ${canEdit ? `<button type="button" id="manageProjectStagiairesBtn" class="btn-secondary">👥 Stagiaires (${stagiairesProjet.length})</button>` : ""}
+      ${canEdit ? `<button type="button" id="manageProjectStagiairesBtn" class="btn-secondary"><img src="stagiaires.png" alt="" class="stag-avatar stag-avatar-xs" /><span>Stagiaires (${stagiairesProjet.length})</span></button>` : ""}
       ${isOwner ? `<button type="button" id="shareProjectBtn" class="btn-share-sm">Partager</button>` : ""}
       ${canEdit ? `<button type="button" id="editProjectBtn" class="btn-edit-sm">Modifier</button>` : ""}
       ${isOwner ? `<button type="button" id="deleteProjectBtn" class="btn-danger-sm" title="Supprimer ce projet">Supprimer</button>` : ""}
@@ -1529,6 +1529,7 @@ function rendreListeStagiairesVivier() {
     const nbProjets = projets.filter((p) => (p.stagiaires || []).some((ps) => String(ps.id) === String(s.id))).length;
     return `
       <div class="stagiaire-row">
+        <img src="stagiaires.png" alt="" class="stag-avatar stag-avatar-md" />
         <div class="stagiaire-main">
           <strong>${s.prenom} ${s.nom}</strong>
           <div class="stagiaire-sub">
@@ -1610,6 +1611,7 @@ function ouvrirModaleAffectationStagiaires(projet) {
       return `
         <label class="stagiaire-check-item">
           <input type="checkbox" value="${s.id}" ${checked} />
+          <img src="stagiaires.png" alt="" class="stag-avatar stag-avatar-sm" />
           <div>
             <strong>${s.prenom} ${s.nom}</strong>
             <div class="stagiaire-sub">${s.email || "Sans e-mail"}${s.telephone ? ` • ${s.telephone}` : ""}</div>
