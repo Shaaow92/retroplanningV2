@@ -1825,6 +1825,9 @@ table.cal td .dnum {
 }
 .btn-share-sm:hover { background: #dbeafe; }
 .btn-edit-sm {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text-secondary);
@@ -1835,7 +1838,7 @@ table.cal td .dnum {
   border-radius: 6px;
   cursor: pointer;
 }
-.btn-edit-sm:hover { background: var(--surface-subtle); color: var(--text); }
+.btn-edit-sm:hover { background: #fde68a; color: #78350f; border-color: #f59e0b; }
 
 .role-pill {
   display: inline-flex;
