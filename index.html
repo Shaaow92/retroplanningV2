@@ -96,6 +96,7 @@
               <button type="button" id="printViewBtn" class="io-menu-item" role="menuitem">Imprimer la vue</button>
             </div>
           </div>
+          <button type="button" id="openStagiairesModalBtn" class="btn-secondary">👥 Stagiaires (<span id="stagiairesCountBadge">0</span>)</button>
           <button type="button" class="btn-primary" data-open-modal>+ Nouveau projet</button>
         </div>
       </section>
@@ -242,6 +243,64 @@
         <div class="share-list-section">
           <strong class="share-section-label">Personnes ayant accès</strong>
           <div id="shareCollaboratorsList" class="share-collab-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE VIVIER STAGIAIRES UP'2C -->
+  <div id="stagiairesModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="stagiairesModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="stagiairesModalTitle">Stagiaires du compte (Up'2C)</h2>
+          <p class="card-subtitle">Importez un fichier Excel Up'2C, gérez votre liste et affectez les stagiaires voulus aux projets</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" id="importUp2cBtn" class="btn-secondary">📥 Importer Excel Up'2C</button>
+          <input type="file" id="importUp2cInput" accept=".xlsx,.xls,.csv" hidden />
+          <button type="button" id="closeStagiairesModalBtn" class="btn-close-modal" aria-label="Fermer">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
+        <form id="addStagiaireForm" class="stagiaire-add-row">
+          <input type="text" id="stagPrenomInput" placeholder="Prénom" required />
+          <input type="text" id="stagNomInput" placeholder="Nom" required />
+          <input type="email" id="stagEmailInput" placeholder="E-mail (optionnel)" />
+          <input type="text" id="stagTelInput" placeholder="Téléphone" />
+          <button type="submit" class="btn-primary">+ Ajouter</button>
+        </form>
+        <div class="stagiaire-toolbar">
+          <input type="search" id="stagiairesSearchInput" placeholder="Rechercher un stagiaire (nom, prénom, e-mail)..." />
+          <span id="stagiairesModalCount" class="muted-count">0 stagiaire</span>
+        </div>
+        <div id="stagiairesListBox" class="stagiaires-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE AFFECTATION STAGIAIRES SUR LE PROJET ACTIF -->
+  <div id="projectStagiairesModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="projectStagModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="projectStagModalTitle">Stagiaires sur le projet</h2>
+          <p id="projectStagSubtitle" class="card-subtitle">Cochez ou décochez les stagiaires à ajouter ou retirer de ce projet</p>
+        </div>
+        <button type="button" id="closeProjectStagModalBtn" class="btn-close-modal" aria-label="Fermer">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:0.85rem;">
+        <div class="stagiaire-toolbar">
+          <input type="search" id="projectStagSearchInput" placeholder="Filtrer les stagiaires..." />
+          <div class="header-actions">
+            <button type="button" id="selectAllProjectStagBtn" class="btn-secondary">Tout cocher</button>
+            <button type="button" id="clearAllProjectStagBtn" class="btn-secondary">Tout décocher</button>
+          </div>
+        </div>
+        <div id="projectStagiairesChecklist" class="stagiaires-list"></div>
+        <div class="modal-footer">
+          <button type="button" id="cancelProjectStagBtn" class="btn-secondary">Annuler</button>
+          <button type="button" id="saveProjectStagBtn" class="btn-primary">Enregistrer sur le projet</button>
         </div>
       </div>
     </div>
