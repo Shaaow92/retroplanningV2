@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -39,7 +39,7 @@
         </label>
         <div id="authFeedback" class="auth-feedback" hidden></div>
         <button type="submit" id="authSubmitBtn" class="btn-primary btn-full">Se connecter</button>
-        <p style="margin:0.25rem 0 0;font-size:0.75rem;color:#64748b;text-align:center;">Espace interne E2C — Aucune adresse email requise.</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#737373;text-align:center;">Espace interne E2C — Aucune adresse email requise</p>
       </form>
     </div>
   </div>
@@ -66,7 +66,7 @@
       <section class="page-header">
         <div>
           <h1>Suivi des actions E2C</h1>
-          <p>Partez de la date cible et remontez les étapes : cochez une tâche pour la valider ou cliquez sur son statut.</p>
+          <p>Partez de la date cible et remontez les étapes : cochez une tâche pour la valider ou cliquez sur son statut</p>
         </div>
         <div class="header-actions io-toolbar">
           <button type="button" id="seedExamplesBtn" class="btn-secondary" hidden>+ Charger 3 projets exemples</button>
@@ -96,7 +96,7 @@
               <button type="button" id="printViewBtn" class="io-menu-item" role="menuitem">Imprimer la vue</button>
             </div>
           </div>
-          <button type="button" id="openStagiairesModalBtn" class="btn-secondary">Stagiaires · <span id="stagiairesCountBadge">0</span></button>
+          <button type="button" id="openStagiairesModalBtn" class="btn-secondary btn-with-icon"><img src="stagiaires.png" alt="" style="width:18px;height:18px;object-fit:cover;object-position:center 20%;border-radius:999px;" /><span>Stagiaires · <span id="stagiairesCountBadge">0</span></span></button>
           <button type="button" class="btn-primary" data-open-modal>+ Nouveau projet</button>
         </div>
       </section>

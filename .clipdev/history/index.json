@@ -1,131 +1,5 @@
 [
   {
-    "timestamp": "2026-11-25T19:41:28.6028203+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632088602820300_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:41:28.6358447+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632088635844700_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:41:28.6582277+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632088658227700_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:41:28.6850952+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632088685095200_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:41:28.7077062+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632088707706200_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:41:28.7327016+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632088732701600_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:41:28.7388088+01:00",
-    "rel_path": "style.css",
-    "snapshot_path": "1795632088738808800_style.css.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T19:42:20.1091476+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795632140109147600_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:08:43.8847293+01:00",
-    "rel_path": "style.css",
-    "snapshot_path": "1795633723884729300_style.css.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:08:43.8946582+01:00",
-    "rel_path": "style.css",
-    "snapshot_path": "1795633723894658200_style.css.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:08:43.9056232+01:00",
-    "rel_path": "style.css",
-    "snapshot_path": "1795633723905623200_style.css.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:08:43.912875+01:00",
-    "rel_path": "index.html",
-    "snapshot_path": "1795633723912875000_index.html.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:08:43.9331987+01:00",
-    "rel_path": "index.html",
-    "snapshot_path": "1795633723933198700_index.html.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:11:15.6458217+01:00",
-    "rel_path": "index.html",
-    "snapshot_path": "1795633875645821700_index.html.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:11:15.654065+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795633875654065000_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:11:15.6640919+01:00",
-    "rel_path": "style.css",
-    "snapshot_path": "1795633875664091900_style.css.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:12:22.6837876+01:00",
-    "rel_path": "index.html",
-    "snapshot_path": "1795633942683787600_index.html.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:12:22.6908158+01:00",
-    "rel_path": "index.html",
-    "snapshot_path": "1795633942690815800_index.html.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:12:22.7004262+01:00",
-    "rel_path": "app.js",
-    "snapshot_path": "1795633942700426200_app.js.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:12:22.71093+01:00",
-    "rel_path": "style.css",
-    "snapshot_path": "1795633942710930000_style.css.bak",
-    "op": "replace"
-  },
-  {
-    "timestamp": "2026-11-25T20:12:50.8981949+01:00",
-    "rel_path": "index.html",
-    "snapshot_path": "1795633970898194900_index.html.bak",
-    "op": "replace"
-  },
-  {
     "timestamp": "2026-11-25T20:12:50.9056063+01:00",
     "rel_path": "index.html",
     "snapshot_path": "1795633970905606300_index.html.bak",
@@ -297,6 +171,132 @@
     "timestamp": "2026-11-25T20:40:07.5047509+01:00",
     "rel_path": "style.css",
     "snapshot_path": "1795635607504750900_style.css.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T14:27:27.2916188+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795699647291618800_style.css.bak",
+    "op": "write"
+  },
+  {
+    "timestamp": "2026-11-26T14:27:27.3182089+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795699647318208900_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T14:28:50.1892208+01:00",
+    "rel_path": "retroplanning.css",
+    "snapshot_path": "1795699730189220800_retroplanning.css.bak",
+    "op": "write"
+  },
+  {
+    "timestamp": "2026-11-26T14:30:21.3409961+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795699821340996100_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T14:30:21.3607742+01:00",
+    "rel_path": "retroplanning.html",
+    "snapshot_path": "1795699821360774200_retroplanning.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T14:39:41.2699411+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795700381269941100_style.css.bak",
+    "op": "write"
+  },
+  {
+    "timestamp": "2026-11-26T14:42:56.3635903+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795700576363590300_style.css.bak",
+    "op": "write"
+  },
+  {
+    "timestamp": "2026-11-26T14:45:56.2697787+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795700756269778700_style.css.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T14:51:45.8780273+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795701105878027300_style.css.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:04:38.4533337+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795701878453333700_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:08:52.056455+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795702132056455000_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:09:19.3089033+01:00",
+    "rel_path": "app.js",
+    "snapshot_path": "1795702159308903300_app.js.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:10:39.7984742+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795702239798474200_style.css.bak",
+    "op": "write"
+  },
+  {
+    "timestamp": "2026-11-26T15:11:46.2214282+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795702306221428200_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:12:53.5994803+01:00",
+    "rel_path": "app.js",
+    "snapshot_path": "1795702373599480300_app.js.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:15:12.5542114+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795702512554211400_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:15:13.9778928+01:00",
+    "rel_path": "style.css",
+    "snapshot_path": "1795702513977892800_style.css.bak",
+    "op": "write"
+  },
+  {
+    "timestamp": "2026-11-26T15:15:13.9942923+01:00",
+    "rel_path": "app.js",
+    "snapshot_path": "1795702513994292300_app.js.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T15:17:37.0821177+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795702657082117700_index.html.bak",
+    "op": "replace"
+  },
+  {
+    "timestamp": "2026-11-26T21:16:13.456491+01:00",
+    "rel_path": "mobile.css",
+    "op": "write",
+    "is_new": true
+  },
+  {
+    "timestamp": "2026-11-26T21:16:13.4693328+01:00",
+    "rel_path": "index.html",
+    "snapshot_path": "1795724173469332800_index.html.bak",
     "op": "replace"
   }
 ]

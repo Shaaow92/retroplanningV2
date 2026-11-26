@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f8fafc;
   --surface: #ffffff;
   --surface-subtle: #f1f5f9;
@@ -452,6 +452,20 @@ table.cal td.active-range {
 }
 
 .detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+.detail-header h3 {
+  margin: 0;
+  width: 100%;
+  font-size: 1.15rem;
+  line-height: 1.28;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  word-break: break-word;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1775,6 +1789,25 @@ table.cal td .dnum {
 /* --- PARTAGE, RÔLES & ÉDITION --- */
 .detail-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+.detail-actions button,
+#manageProjectStagiairesBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  height: 30px;
+  padding: 0 0.65rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  display: flex;
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
@@ -1792,6 +1825,9 @@ table.cal td .dnum {
 }
 .btn-share-sm:hover { background: #dbeafe; }
 .btn-edit-sm {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text-secondary);
@@ -1802,7 +1838,7 @@ table.cal td .dnum {
   border-radius: 6px;
   cursor: pointer;
 }
-.btn-edit-sm:hover { background: var(--surface-subtle); color: var(--text); }
+.btn-edit-sm:hover { background: #fde68a; color: #78350f; border-color: #f59e0b; }
 
 .role-pill {
   display: inline-flex;
@@ -2021,3 +2057,36 @@ table.cal td.is-weekend {
   gap: 0.75rem;
   margin-left: auto;
 }
+
+/* Recadrage et tailles de stagiaires.png */
+.stag-avatar {
+display: inline-block;
+flex-shrink: 0;
+object-fit: cover;
+object-position: center 20%;
+border-radius: 999px;
+border: 1px solid var(--border-strong, rgba(0, 0, 0, 0.14));
+background: var(--surface-subtle, #f4f4f5);
+vertical-align: middle;
+}
+.stag-avatar-xs { width: 15px; height: 15px; }
+.stag-avatar-sm { width: 20px; height: 20px; }
+.stag-avatar-md { width: 32px; height: 32px; }
+.stag-avatar-lg { width: 38px; height: 38px; }
+.stag-section-label { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+.stag-avatar {
+  display: inline-block;
+  flex-shrink: 0;
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong, rgba(15, 23, 42, 0.18));
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  background: var(--surface-subtle, #f4f4f5);
+  vertical-align: middle;
+}
+.stag-avatar-xs { width: 15px; height: 15px; }
+.stag-avatar-sm { width: 22px; height: 22px; }
+.stag-avatar-md { width: 34px; height: 34px; }
+.stag-avatar-lg { width: 40px; height: 40px; }

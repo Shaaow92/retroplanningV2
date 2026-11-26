@@ -1,4 +1,4 @@
-const SUPABASE_URL = "https://alosapdelryrbcudrsoj.supabase.co";
+﻿const SUPABASE_URL = "https://alosapdelryrbcudrsoj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aJhHdHk4RgezLXqQjvhFlQ_e0eSBa3_";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -407,8 +407,10 @@ function rendrePanneau() {
       ? `<span class="role-pill is-editor">Collaborateur • Modification &amp; ajout autorisés</span>`
       : `<span class="role-pill is-viewer">Collaborateur • Validation « Fait » uniquement</span>`;
 
+  const stagiairesProjet = Array.isArray(actif.stagiaires) ? actif.stagiaires : [];
   const actionBtns = `
     <div class="detail-actions">
+      ${canEdit ? `<button type="button" id="manageProjectStagiairesBtn" class="btn-secondary"><img src="stagiaires.png" alt="" class="stag-avatar stag-avatar-xs" /><span>Stagiaires (${stagiairesProjet.length})</span></button>` : ""}
       ${isOwner ? `<button type="button" id="shareProjectBtn" class="btn-share-sm">Partager</button>` : ""}
       ${canEdit ? `<button type="button" id="editProjectBtn" class="btn-edit-sm">Modifier</button>` : ""}
       ${isOwner ? `<button type="button" id="deleteProjectBtn" class="btn-danger-sm" title="Supprimer ce projet">Supprimer</button>` : ""}
@@ -416,6 +418,9 @@ function rendrePanneau() {
   `;
 
   const etapesTriees = [...actif.etapes].sort((a, b) => (a.dateISO || "").localeCompare(b.dateISO || ""));
+  const stagiairesChips = stagiairesProjet.length
+    ? `<div class="project-stag-summary"><strong>Stagiaires affectés (${stagiairesProjet.length}) :</strong> ${stagiairesProjet.map((s) => `<span class="stag-chip">${s.prenom || ""} ${s.nom || ""} <button type="button" class="stag-chip-rm" data-rm-stag-id="${s.id}" title="Retirer du projet">×</button></span>`).join(" ")}</div>`
+    : `<div class="project-stag-summary is-empty">Aucun stagiaire affecté à ce projet.${canEdit ? ` <button type="button" id="quickAssignStagBtn" class="link-inline-btn">Ajouter depuis la liste</button>` : ""}</div>`;
 
   detailBox.innerHTML = `
     ${roleBadge}
@@ -424,6 +429,7 @@ function rendrePanneau() {
       ${actionBtns}
     </div>
     <div class="meta">Du ${formatDateCourt(actif.startDate)} au ${formatDateCourt(actif.endDate)} • <strong>${countJoursOuvres(actif.startDate, actif.endDate)} j. ouvrés</strong> • ${faitesActif}/${actif.etapes.length} fait (${pctActif}%)</div>
+    ${stagiairesChips}
     ${(() => {
       const todayParts = parseISO(getTodayISO());
       const todayMs = todayParts ? Date.UTC(todayParts.year, todayParts.month, todayParts.day) : null;
@@ -464,6 +470,16 @@ function rendrePanneau() {
     }).join("")}
   `;
 
+  document.getElementById("manageProjectStagiairesBtn")?.addEventListener("click", () => ouvrirModaleAffectationStagiaires(actif));
+  document.getElementById("quickAssignStagBtn")?.addEventListener("click", () => ouvrirModaleAffectationStagiaires(actif));
+  detailBox.querySelectorAll("[data-rm-stag-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!canEdit) return;
+      const sid = btn.dataset.rmStagId;
+      const nextList = stagiairesProjet.filter((s) => String(s.id) !== String(sid));
+      await enregistrerStagiairesProjet(actif, nextList);
+    });
+  });
   document.getElementById("shareProjectBtn")?.addEventListener("click", () => ouvrirModalePartage(actif));
   document.getElementById("editProjectBtn")?.addEventListener("click", () => ouvrirModaleEditionProjet(actif));
   document.getElementById("deleteProjectBtn")?.addEventListener("click", () => supprimerProjet(actif.id));
@@ -1112,11 +1128,23 @@ async function importerDepuisXlsx(file) {
       return;
     }
 
+    const normalizeHeader = (h) => String(h || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().trim();
+
     const firstKeys = Object.keys(rawRows[0] || {});
-    const hasProjetCol = firstKeys.some((k) => k.trim().toLowerCase() === "projet");
-    const hasEtapeCol = firstKeys.some((k) => ["étape", "etape"].includes(k.trim().toLowerCase()));
+    const normKeys = firstKeys.map(normalizeHeader);
+    const isStagiairesSheet = normKeys.includes("nom") && normKeys.includes("prenom");
+
+    if (isStagiairesSheet) {
+      await importerStagiairesDepuisRows(rawRows, normalizeHeader);
+      return;
+    }
+
+    const hasProjetCol = normKeys.includes("projet");
+    const hasEtapeCol = normKeys.includes("etape");
     if (!hasProjetCol && !hasEtapeCol) {
-      afficherNotification("Format invalide : utilisez les colonnes Projet, Étape, Date limite, Responsable, Statut.", 6000);
+      afficherNotification("Format non reconnu : utilisez un export de rétroplanning (Projet, Étape...) ou un fichier stagiaires Up'2C (Nom, Prénom...).", 6500);
       return;
     }
 
@@ -1388,8 +1416,312 @@ function initNavigationCalendrier() {
 }
 
 /* --- OPÉRATIONS SUPABASE --- */
+/* --- GESTION DES STAGIAIRES UP'2C & AFFECTATION AUX PROJETS --- */
+function rendreCompteurStagiaires() {
+  const badge = document.getElementById("stagiairesCountBadge");
+  if (badge) badge.textContent = String(stagiairesVivier.length);
+}
+
+async function chargerStagiairesUtilisateur() {
+  if (!currentUser) return;
+  const { data, error } = await sb
+    .from("stagiaires")
+    .select("*")
+    .order("nom", { ascending: true })
+    .order("prenom", { ascending: true });
+
+  if (error) {
+    console.warn("Chargement stagiaires :", error.message);
+    return;
+  }
+  stagiairesVivier = data || [];
+  rendreCompteurStagiaires();
+  if (!document.getElementById("stagiairesModal")?.hidden) {
+    rendreListeStagiairesVivier();
+  }
+}
+
+async function importerStagiairesDepuisRows(rawRows, normalizeHeader) {
+  const getField = (row, aliases) => {
+    const foundKey = Object.keys(row).find((k) => aliases.includes(normalizeHeader(k)));
+    return foundKey ? String(row[foundKey] ?? "").trim() : "";
+  };
+
+  const existingEmails = new Set(
+    stagiairesVivier.map((s) => (s.email || "").trim().toLowerCase()).filter(Boolean)
+  );
+  const existingNames = new Set(
+    stagiairesVivier.map((s) => `${(s.prenom || "").toLowerCase()}|${(s.nom || "").toLowerCase()}`)
+  );
+
+  const candidats = [];
+  const seenInFile = new Set();
+
+  rawRows.forEach((r) => {
+    const nom = getField(r, ["nom", "nom de famille", "lastname"]);
+    const prenom = getField(r, ["prenom", "prénom", "firstname"]);
+    const email = getField(r, ["adresse e-mail", "adresse email", "e-mail", "email", "courriel", "mail"]);
+    const telephone = getField(r, ["telephone", "téléphone", "telephone fictif", "tel", "mobile", "portable"]);
+    const adresse = getField(r, ["adresse", "adresse postale", "adresse postale fictive", "adresse fictive"]);
+
+    if (!nom && !prenom && !email) return;
+    const emailKey = email.toLowerCase();
+    const nameKey = `${prenom.toLowerCase()}|${nom.toLowerCase()}`;
+    const dedupKey = emailKey || nameKey;
+
+    if (seenInFile.has(dedupKey)) return;
+    seenInFile.add(dedupKey);
+
+    if (emailKey && existingEmails.has(emailKey)) return;
+    if (!emailKey && nameKey !== "|" && existingNames.has(nameKey)) return;
+
+    candidats.push({
+      user_id: currentUser.id,
+      nom: nom || "—",
+      prenom: prenom || "—",
+      email,
+      telephone,
+      adresse
+    });
+  });
+
+  if (!candidats.length) {
+    afficherNotification("Aucun nouveau stagiaire à ajouter (déjà présents ou lignes vides).", 4500);
+    return;
+  }
+
+  const { data, error } = await sb.from("stagiaires").insert(candidats).select();
+  if (error) {
+    afficherNotification(`Erreur import stagiaires Supabase : ${error.message}`, 5500);
+    return;
+  }
+
+  stagiairesVivier = [...stagiairesVivier, ...(data || [])].sort((a, b) =>
+    `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, "fr")
+  );
+  rendreCompteurStagiaires();
+  rendreListeStagiairesVivier();
+  afficherNotification(`${(data || []).length} stagiaire(s) importé(s) dans votre compte !`);
+}
+
+function rendreListeStagiairesVivier() {
+  const box = document.getElementById("stagiairesListBox");
+  const countEl = document.getElementById("stagiairesModalCount");
+  const q = (document.getElementById("stagiairesSearchInput")?.value || "").trim().toLowerCase();
+
+  const filtered = stagiairesVivier.filter((s) => {
+    if (!q) return true;
+    return `${s.prenom || ""} ${s.nom || ""} ${s.email || ""} ${s.telephone || ""} ${s.adresse || ""}`
+      .toLowerCase().includes(q);
+  });
+
+  if (countEl) {
+    countEl.textContent = `${filtered.length} / ${stagiairesVivier.length} stagiaire(s)`;
+  }
+  if (!box) return;
+
+  if (!filtered.length) {
+    box.innerHTML = `<div class="empty-state">Aucun stagiaire dans la liste. Importez un fichier Excel Up'2C ou ajoutez-en un ci-dessus.</div>`;
+    return;
+  }
+
+  box.innerHTML = filtered.map((s) => {
+    const nbProjets = projets.filter((p) => (p.stagiaires || []).some((ps) => String(ps.id) === String(s.id))).length;
+    return `
+      <div class="stagiaire-row">
+        <img src="stagiaires.png" alt="" class="stag-avatar stag-avatar-md" />
+        <div class="stagiaire-main">
+          <strong>${s.prenom} ${s.nom}</strong>
+          <div class="stagiaire-sub">
+            ${s.email ? `<span>✉️ ${s.email}</span>` : ""}
+            ${s.telephone ? `<span>📞 ${s.telephone}</span>` : ""}
+            ${s.adresse ? `<span>📍 ${s.adresse}</span>` : ""}
+          </div>
+        </div>
+        <div class="stagiaire-actions">
+          <span class="stag-project-pill">${nbProjets} projet(s)</span>
+          <button type="button" class="btn-danger-sm" data-delete-stag="${s.id}">Supprimer</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  box.querySelectorAll("[data-delete-stag]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.deleteStag;
+      const { error } = await sb.from("stagiaires").delete().eq("id", id);
+      if (error) {
+        afficherNotification(`Suppression impossible : ${error.message}`, 4500);
+        return;
+      }
+      stagiairesVivier = stagiairesVivier.filter((item) => String(item.id) !== String(id));
+      rendreCompteurStagiaires();
+      rendreListeStagiairesVivier();
+      afficherNotification("Stagiaire retiré du compte.");
+    });
+  });
+}
+
+async function enregistrerStagiairesProjet(projet, listeStagiaires) {
+  const sanitized = listeStagiaires.map((s) => ({
+    id: s.id,
+    nom: s.nom,
+    prenom: s.prenom,
+    email: s.email || "",
+    telephone: s.telephone || ""
+  }));
+  const { error } = await sb
+    .from("projects")
+    .update({ stagiaires: sanitized })
+    .eq("id", projet.id);
+  if (error) {
+    afficherNotification(`Erreur mise à jour stagiaires projet : ${error.message}`, 5000);
+    return;
+  }
+  projet.stagiaires = sanitized;
+  rendreTout();
+  afficherNotification(`Stagiaires mis à jour pour « ${projet.titre} » (${sanitized.length}).`);
+}
+
+function ouvrirModaleAffectationStagiaires(projet) {
+  if (!projet || !peutModifierProjet(projet)) return;
+  projetActifId = projet.id;
+  const modal = document.getElementById("projectStagiairesModal");
+  const listBox = document.getElementById("projectStagiairesChecklist");
+  const searchInput = document.getElementById("projectStagSearchInput");
+  if (!modal || !listBox) return;
+
+  document.getElementById("projectStagSubtitle").textContent = `Projet : ${projet.titre} — Sélectionnez les stagiaires à inclure`;
+  if (searchInput) searchInput.value = "";
+
+  const selectedIds = new Set((projet.stagiaires || []).map((s) => String(s.id)));
+
+  const renderChecks = () => {
+    const q = (searchInput?.value || "").trim().toLowerCase();
+    const items = stagiairesVivier.filter((s) => {
+      if (!q) return true;
+      return `${s.prenom} ${s.nom} ${s.email || ""}`.toLowerCase().includes(q);
+    });
+    if (!items.length) {
+      listBox.innerHTML = `<div class="empty-state">Aucun stagiaire disponible. Importez d'abord votre fichier Excel Up'2C.</div>`;
+      return;
+    }
+    listBox.innerHTML = items.map((s) => {
+      const checked = selectedIds.has(String(s.id)) ? "checked" : "";
+      return `
+        <label class="stagiaire-check-item">
+          <input type="checkbox" value="${s.id}" ${checked} />
+          <img src="stagiaires.png" alt="" class="stag-avatar stag-avatar-sm" />
+          <div>
+            <strong>${s.prenom} ${s.nom}</strong>
+            <div class="stagiaire-sub">${s.email || "Sans e-mail"}${s.telephone ? ` • ${s.telephone}` : ""}</div>
+          </div>
+        </label>
+      `;
+    }).join("");
+
+    listBox.querySelectorAll("input[type='checkbox']").forEach((chk) => {
+      chk.addEventListener("change", () => {
+        if (chk.checked) selectedIds.add(String(chk.value));
+        else selectedIds.delete(String(chk.value));
+      });
+    });
+  };
+
+  renderChecks();
+  if (searchInput) searchInput.oninput = renderChecks;
+
+  document.getElementById("selectAllProjectStagBtn").onclick = () => {
+    stagiairesVivier.forEach((s) => selectedIds.add(String(s.id)));
+    renderChecks();
+  };
+  document.getElementById("clearAllProjectStagBtn").onclick = () => {
+    selectedIds.clear();
+    renderChecks();
+  };
+  document.getElementById("saveProjectStagBtn").onclick = async () => {
+    const chosen = stagiairesVivier.filter((s) => selectedIds.has(String(s.id)));
+    await enregistrerStagiairesProjet(projet, chosen);
+    fermerModaleAffectationStagiaires();
+  };
+
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function fermerModaleAffectationStagiaires() {
+  const modal = document.getElementById("projectStagiairesModal");
+  if (modal) modal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function initStagiairesModule() {
+  const stagModal = document.getElementById("stagiairesModal");
+  const up2cInput = document.getElementById("importUp2cInput");
+
+  document.getElementById("openStagiairesModalBtn")?.addEventListener("click", () => {
+    if (!stagModal) return;
+    rendreListeStagiairesVivier();
+    stagModal.hidden = false;
+    document.body.classList.add("modal-open");
+  });
+  document.getElementById("closeStagiairesModalBtn")?.addEventListener("click", () => {
+    if (stagModal) stagModal.hidden = true;
+    document.body.classList.remove("modal-open");
+  });
+  stagModal?.addEventListener("click", (e) => {
+    if (e.target === stagModal) {
+      stagModal.hidden = true;
+      document.body.classList.remove("modal-open");
+    }
+  });
+
+  document.getElementById("importUp2cBtn")?.addEventListener("click", () => up2cInput?.click());
+  up2cInput?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) await importerDepuisXlsx(file);
+  });
+
+  document.getElementById("stagiairesSearchInput")?.addEventListener("input", rendreListeStagiairesVivier);
+
+  document.getElementById("addStagiaireForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    const prenom = document.getElementById("stagPrenomInput").value.trim();
+    const nom = document.getElementById("stagNomInput").value.trim();
+    const email = document.getElementById("stagEmailInput").value.trim();
+    const telephone = document.getElementById("stagTelInput").value.trim();
+    if (!prenom || !nom) return;
+
+    const { data, error } = await sb
+      .from("stagiaires")
+      .insert([{ user_id: currentUser.id, prenom, nom, email, telephone, adresse: "" }])
+      .select()
+      .single();
+    if (error) {
+      afficherNotification(`Ajout impossible : ${error.message}`, 4500);
+      return;
+    }
+    stagiairesVivier = [...stagiairesVivier, data].sort((a, b) =>
+      `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, "fr")
+    );
+    e.target.reset();
+    rendreCompteurStagiaires();
+    rendreListeStagiairesVivier();
+    afficherNotification(`${prenom} ${nom} ajouté(e) à la liste.`);
+  });
+
+  document.getElementById("closeProjectStagModalBtn")?.addEventListener("click", fermerModaleAffectationStagiaires);
+  document.getElementById("cancelProjectStagBtn")?.addEventListener("click", fermerModaleAffectationStagiaires);
+  document.getElementById("projectStagiairesModal")?.addEventListener("click", (e) => {
+    if (e.target.id === "projectStagiairesModal") fermerModaleAffectationStagiaires();
+  });
+}
+
 async function chargerProjetsUtilisateur() {
   if (!currentUser) return;
+  await chargerStagiairesUtilisateur();
   const { data, error } = await sb
     .from("projects")
     .select("*")
@@ -1473,8 +1805,8 @@ function ajouterLigneEtape(dateISO = "", libelle = "", responsable = "", stepId 
       <span class="cal-ico">📅</span>
       <span class="sr-date-label">${formatDateCourt(isoVal)}</span>
     </button>
-    <input type="text" class="sr-title" placeholder="Étape à faire en amont..." value="${libelle}" required />
-    <input type="text" class="sr-owner" placeholder="Responsable" value="${responsable}" required />
+    <input type="text" class="sr-title" placeholder="Tâche à réaliser..." value="${libelle}" required />
+    <input type="text" class="sr-owner" placeholder="Référent / Chargé" value="${responsable}" required />
     <button type="button" class="btn-remove" title="Retirer cette étape">✕</button>
   `;
   row.querySelector(".sr-date-btn").addEventListener("click", (e) => {
@@ -1502,6 +1834,7 @@ function reinitialiserDatesFormulaire(baseStartISO) {
 }
 
 function initFormulaireProjet() {
+  initStagiairesModule();
   reinitialiserDatesFormulaire();
 
   document.getElementById("addStepRowBtn").addEventListener("click", () => {

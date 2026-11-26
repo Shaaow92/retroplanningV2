@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -39,7 +39,7 @@
         </label>
         <div id="authFeedback" class="auth-feedback" hidden></div>
         <button type="submit" id="authSubmitBtn" class="btn-primary btn-full">Se connecter</button>
-        <p style="margin:0.25rem 0 0;font-size:0.75rem;color:#64748b;text-align:center;">Espace interne E2C — Aucune adresse email requise.</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#737373;text-align:center;">Espace interne E2C — Aucune adresse email requise</p>
       </form>
     </div>
   </div>
@@ -66,7 +66,7 @@
       <section class="page-header">
         <div>
           <h1>Suivi des actions E2C</h1>
-          <p>Partez de la date cible et remontez les étapes : cochez une tâche pour la valider ou cliquez sur son statut.</p>
+          <p>Partez de la date cible et remontez les étapes : cochez une tâche pour la valider ou cliquez sur son statut</p>
         </div>
         <div class="header-actions io-toolbar">
           <button type="button" id="seedExamplesBtn" class="btn-secondary" hidden>+ Charger 3 projets exemples</button>
@@ -96,7 +96,7 @@
               <button type="button" id="printViewBtn" class="io-menu-item" role="menuitem">Imprimer la vue</button>
             </div>
           </div>
-          <button type="button" id="openStagiairesModalBtn" class="btn-secondary">Stagiaires · <span id="stagiairesCountBadge">0</span></button>
+          <button type="button" id="openStagiairesModalBtn" class="btn-secondary btn-with-icon"><img src="stagiaires.png" alt="" style="width:16px;height:16px;object-fit:cover;object-position:center 20%;border-radius:4px;" /><span>Stagiaires · <span id="stagiairesCountBadge">0</span></span></button>
           <button type="button" class="btn-primary" data-open-modal>+ Nouveau projet</button>
         </div>
       </section>
@@ -107,18 +107,11 @@
         <div class="card">
           <div class="card-head">
             <div class="view-head-left">
-              <div class="view-switcher" role="tablist" aria-label="Mode d'affichage">
-                <button type="button" id="btnViewCal" class="switch-pill active" data-view-switch="calendar">Calendrier</button>
-                <button type="button" id="btnViewGantt" class="switch-pill" data-view-switch="gantt">Gantt</button>
-              </div>
               <div id="calNavControls" class="cal-nav-group">
                 <button type="button" id="prevMonthBtn" class="btn-cal-nav" title="Mois précédent" aria-label="Mois précédent">‹</button>
                 <h2 id="calMonthTitle" class="cal-month-title">Novembre 2026</h2>
                 <button type="button" id="nextMonthBtn" class="btn-cal-nav" title="Mois suivant" aria-label="Mois suivant">›</button>
                 <button type="button" id="todayMonthBtn" class="btn-today">Aujourd'hui</button>
-              </div>
-              <div id="ganttHeaderInfo" class="gantt-header-info" hidden>
-                <h2 class="gantt-title">Vue globale Gantt</h2>
               </div>
             </div>
             <span id="globalProgress" class="badge-info">Aucun projet</span>
@@ -135,7 +128,6 @@
             </table>
           </div>
 
-          <div id="ganttViewContainer" class="gantt-wrapper" hidden></div>
         </div>
 
         <aside id="suivi" class="card">
@@ -184,8 +176,8 @@
         </div>
         <div class="grid-2">
           <label class="field">
-            <span>Responsable principal</span>
-            <input type="text" id="projOwner" placeholder="Ex. Formateur référent" required />
+            <span>Référent / Chargé de suivi</span>
+            <input type="text" id="projOwner" placeholder="Ex. Référent parcours ou chargé d'action" required />
           </label>
           <label class="field">
             <span>Couleur du repère</span>
@@ -206,6 +198,12 @@
               <span class="muted-small">Cliquez sur la date d'une étape pour la choisir sur le calendrier</span>
             </div>
             <button type="button" id="addStepRowBtn" class="btn-secondary">+ Ajouter une étape</button>
+          </div>
+          <div class="step-row step-cols-head" aria-hidden="true">
+            <span class="muted-small">Date</span>
+            <span class="muted-small">Tâche à réaliser</span>
+            <span class="muted-small">Référent / Chargé</span>
+            <span></span>
           </div>
           <div id="stepRowsContainer" class="step-rows"></div>
         </div>
@@ -257,12 +255,12 @@
           <p class="card-subtitle">Importez un fichier Excel Up'2C, gérez votre liste et affectez les stagiaires voulus aux projets</p>
         </div>
         <div class="header-actions">
-          <button type="button" id="importUp2cBtn" class="btn-secondary">📥 Importer Excel Up'2C</button>
+          <button type="button" id="importUp2cBtn" class="btn-secondary">Importer Excel Up'2C</button>
           <input type="file" id="importUp2cInput" accept=".xlsx,.xls,.csv" hidden />
           <button type="button" id="closeStagiairesModalBtn" class="btn-close-modal" aria-label="Fermer">✕</button>
         </div>
       </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
         <form id="addStagiaireForm" class="stagiaire-add-row">
           <input type="text" id="stagPrenomInput" placeholder="Prénom" required />
           <input type="text" id="stagNomInput" placeholder="Nom" required />
@@ -289,7 +287,7 @@
         </div>
         <button type="button" id="closeProjectStagModalBtn" class="btn-close-modal" aria-label="Fermer">✕</button>
       </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:0.85rem;">
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
         <div class="stagiaire-toolbar">
           <input type="search" id="projectStagSearchInput" placeholder="Filtrer les stagiaires..." />
           <div class="header-actions">

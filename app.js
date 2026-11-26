@@ -260,6 +260,22 @@ function afficherNotification(message, duree = 3200) {
   banner._timer = setTimeout(() => { banner.hidden = true; }, duree);
 }
 
+function getEcheanceProjetISO(projet) {
+  if (!projet) return "9999-12-31";
+  if (projet.endDate) return projet.endDate;
+  const stepDates = (projet.etapes || []).map((e) => e.dateISO).filter(Boolean).sort();
+  return stepDates[0] || projet.startDate || "9999-12-31";
+}
+
+function trierProjetsParEcheance(liste) {
+  return [...(liste || [])].sort((a, b) => {
+    const da = getEcheanceProjetISO(a);
+    const db = getEcheanceProjetISO(b);
+    if (da !== db) return da.localeCompare(db);
+    return (a.startDate || "9999-12-31").localeCompare(b.startDate || "9999-12-31");
+  });
+}
+
 function getProjetActif() {
   if (!projets.length) return null;
   return projets.find((p) => p.id === projetActifId) || projets[0];
@@ -380,6 +396,7 @@ function rendrePanneau() {
     return;
   }
 
+  projets = trierProjetsParEcheance(projets);
   const actif = getProjetActif();
   tabs.innerHTML = projets
     .map((p) => {
@@ -465,9 +482,6 @@ function rendrePanneau() {
     `;
       }).join("");
     })()}
-  `;
-    `;
-    }).join("")}
   `;
 
   document.getElementById("manageProjectStagiairesBtn")?.addEventListener("click", () => ouvrirModaleAffectationStagiaires(actif));
@@ -779,6 +793,7 @@ function ouvrirModaleProjet() {
   document.getElementById("modalTitle").textContent = "Nouveau projet de rétroplanning";
   document.getElementById("saveProjectBtn").textContent = "Enregistrer le projet";
   document.getElementById("addProjectForm").reset();
+  setProjectColorField("#2563eb");
   reinitialiserDatesFormulaire();
   const modal = document.getElementById("projectModal");
   modal.hidden = false;
@@ -793,7 +808,7 @@ function ouvrirModaleEditionProjet(projet) {
   document.getElementById("saveProjectBtn").textContent = "Enregistrer les modifications";
   document.getElementById("projTitle").value = projet.titre;
   document.getElementById("projOwner").value = projet.owner;
-  document.getElementById("projColor").value = projet.couleur;
+  setProjectColorField(projet.couleur);
   setProjectDateField("start", projet.startDate);
   setProjectDateField("end", projet.endDate);
 
@@ -1805,8 +1820,8 @@ function ajouterLigneEtape(dateISO = "", libelle = "", responsable = "", stepId 
       <span class="cal-ico">📅</span>
       <span class="sr-date-label">${formatDateCourt(isoVal)}</span>
     </button>
-    <input type="text" class="sr-title" placeholder="Étape à faire en amont..." value="${libelle}" required />
-    <input type="text" class="sr-owner" placeholder="Responsable" value="${responsable}" required />
+    <input type="text" class="sr-title" placeholder="Tâche à réaliser..." value="${libelle}" required />
+    <input type="text" class="sr-owner" placeholder="Référent / Chargé" value="${responsable}" required />
     <button type="button" class="btn-remove" title="Retirer cette étape">✕</button>
   `;
   row.querySelector(".sr-date-btn").addEventListener("click", (e) => {
@@ -1833,7 +1848,93 @@ function reinitialiserDatesFormulaire(baseStartISO) {
   ajouterLigneEtape(end, "Action cible / événement", "Formateur référent");
 }
 
+const REPÈRE_COULEURS = [
+  { value: "#2563eb", label: "Bleu royal" },
+  { value: "#0284c7", label: "Bleu azur" },
+  { value: "#0d9488", label: "Turquoise" },
+  { value: "#16a34a", label: "Vert émeraude" },
+  { value: "#15803d", label: "Vert forêt" },
+  { value: "#ea580c", label: "Orange E2C" },
+  { value: "#dc2626", label: "Rouge corail" },
+  { value: "#db2777", label: "Rose framboise" },
+  { value: "#7c3aed", label: "Violet" },
+  { value: "#4f46e5", label: "Indigo" },
+  { value: "#eab308", label: "Jaune ambre" },
+  { value: "#475569", label: "Gris ardoise" }
+];
+
+function applyColorPreview(hex, labelText) {
+  const swatch = document.getElementById("projColorSwatch");
+  const label = document.getElementById("projColorLabel");
+  const btn = document.getElementById("projColorBtn");
+  if (swatch) swatch.style.background = hex;
+  if (label && labelText) label.textContent = labelText;
+  if (btn) {
+    btn.style.borderColor = hex;
+    btn.style.boxShadow = `inset 3px 0 0 ${hex}`;
+  }
+}
+
+function setProjectColorField(hex) {
+  const found = REPÈRE_COULEURS.find((c) => c.value.toLowerCase() === (hex || "").toLowerCase()) || REPÈRE_COULEURS[0];
+  const input = document.getElementById("projColor");
+  if (input) input.value = found.value;
+  applyColorPreview(found.value, found.label);
+  document.querySelectorAll("#projColorMenu .color-option-item").forEach((el) => {
+    el.classList.toggle("is-selected", el.dataset.color === found.value);
+  });
+}
+
+function initColorPicker() {
+  const btn = document.getElementById("projColorBtn");
+  const menu = document.getElementById("projColorMenu");
+  const box = document.getElementById("colorPickerBox");
+  if (!btn || !menu || !box) return;
+
+  menu.innerHTML = REPÈRE_COULEURS.map((c) => `
+    <button type="button" class="color-option-item" role="option" data-color="${c.value}" data-label="${c.label}">
+      <span class="color-dot" style="background:${c.value}"></span>
+      <span>${c.label}</span>
+    </button>
+  `).join("");
+
+  const closeMenu = () => {
+    menu.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+    const currentVal = document.getElementById("projColor")?.value;
+    setProjectColorField(currentVal);
+  };
+
+  btn.addEventListener("click", () => {
+    const nextOpen = menu.hidden;
+    menu.hidden = !nextOpen;
+    btn.setAttribute("aria-expanded", String(nextOpen));
+  });
+
+  menu.querySelectorAll(".color-option-item").forEach((item) => {
+    item.addEventListener("mouseenter", () => {
+      applyColorPreview(item.dataset.color, item.dataset.label);
+    });
+    item.addEventListener("click", () => {
+      setProjectColorField(item.dataset.color);
+      closeMenu();
+    });
+  });
+
+  menu.addEventListener("mouseleave", () => {
+    const currentVal = document.getElementById("projColor")?.value;
+    setProjectColorField(currentVal);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.hidden && !box.contains(e.target)) closeMenu();
+  });
+
+  setProjectColorField("#2563eb");
+}
+
 function initFormulaireProjet() {
+  initColorPicker();
   initStagiairesModule();
   reinitialiserDatesFormulaire();
 
