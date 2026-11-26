@@ -3,24 +3,55 @@
   .topbar-inner {
     padding: 10px 14px;
     gap: 10px;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    min-width: 0;
+    gap: 8px;
   }
 
   .brand-logo-img {
-    height: 30px;
+    height: 28px;
+    width: 28px;
+    flex-shrink: 0;
   }
 
   .brand strong {
-    font-size: 15px;
+    font-size: 14px;
+    white-space: nowrap;
   }
 
   .brand small {
     display: none;
   }
 
+  .user-menu {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .user-pill {
+    font-size: 12px;
+    padding: 4px 8px;
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar .btn-ghost {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
   .wrap,
   .page-container {
-    padding: 14px;
-    gap: 14px;
+    padding: 12px;
+    gap: 12px;
   }
 
   .page-header,
@@ -49,10 +80,9 @@
     grid-column: 1 / -1;
   }
 
-  .io-toolbar .btn-secondary,
-  .io-toolbar .btn-primary,
-  .io-toolbar .io-dropdown,
-  .io-toolbar .io-dropdown > button {
+  .io-toolbar > *,
+  .io-toolbar .io-dropdown > button,
+  .header-actions > * {
     width: 100%;
     justify-content: center;
   }
@@ -70,6 +100,10 @@
     gap: 12px;
   }
 
+  .card {
+    padding: 14px;
+  }
+
   .card-head,
   .panel-header {
     flex-direction: column;
@@ -79,13 +113,44 @@
 
   .cal-wrapper,
   .calendar-table-wrapper {
+    width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .cal,
-  .calendar-table {
-    min-width: 560px;
+  .cal th,
+  .cal td {
+    padding: 4px 3px;
+    font-size: 11px;
+  }
+
+  .cal td {
+    min-height: 54px;
+  }
+
+  .detail {
+    gap: 10px;
+  }
+
+  .detail-actions,
+  .project-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .detail-actions button,
+  .project-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stagiaires-chips,
+  .chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .modal-card {
