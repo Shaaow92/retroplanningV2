@@ -1,8 +1,25 @@
 /* Styles dédiés mobile uniquement (<= 768px) — le rendu desktop reste inchangé */
 @media (max-width: 768px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .wrap,
+  .page-container,
+  .card,
+  .tabs,
+  .detail,
+  .cal-wrapper,
+  .calendar-table-wrapper {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .topbar-inner {
-    padding: 10px 14px;
-    gap: 10px;
+    padding: 10px 12px;
+    gap: 8px;
     flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
@@ -36,7 +53,7 @@
   .user-pill {
     font-size: 12px;
     padding: 4px 8px;
-    max-width: 96px;
+    max-width: 92px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -101,14 +118,14 @@
   }
 
   .card {
-    padding: 14px;
+    padding: 12px;
   }
 
   .card-head,
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
   }
 
   .cal-wrapper,
@@ -118,18 +135,24 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .cal,
+  .calendar-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
   .cal th,
   .cal td {
-    padding: 4px 3px;
-    font-size: 11px;
+    padding: 4px 2px;
+    font-size: 10px;
+    overflow: hidden;
+    word-wrap: break-word;
   }
 
   .cal td {
-    min-height: 54px;
-  }
-
-  .detail {
-    gap: 10px;
+    min-height: 50px;
+    vertical-align: top;
   }
 
   .detail-actions,
@@ -143,6 +166,7 @@
   .detail-actions button,
   .project-actions button {
     width: 100%;
+    min-width: 0;
     justify-content: center;
   }
 
